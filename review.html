@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>镜花水月 · review</title>
+<style>
+  html,body{margin:0;min-height:100%;background:#0a0a12;color:#d8dae8;
+    font:13px/1.7 "Courier Prime","Courier New",monospace;letter-spacing:.06em}
+  main{max-width:960px;margin:0 auto;padding:34px 20px 80px}
+  h1{font-size:15px;letter-spacing:.3em;text-transform:uppercase;font-weight:normal;color:#eef0fa}
+  .sub{color:#8f92ac;font-size:11px;margin-bottom:26px}
+  #tokenrow{display:flex;gap:10px;margin-bottom:30px}
+  input,button{background:rgba(30,32,48,.6);border:1px solid rgba(200,205,230,.3);color:#e6e8f4;
+    font:inherit;padding:9px 13px;border-radius:2px;outline:none}
+  input:focus{border-color:rgba(220,225,255,.6)}
+  button{cursor:pointer;text-transform:uppercase;letter-spacing:.12em;font-size:11px}
+  button:hover{border-color:rgba(230,235,255,.75)}
+  #grid,#planted{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
+  .card{border:1px solid rgba(200,205,230,.18);border-radius:3px;overflow:hidden;
+    background:rgba(20,21,34,.5)}
+  .card img{display:block;width:100%;aspect-ratio:2/3;object-fit:cover}
+  .card .meta{padding:12px 14px 14px;display:flex;flex-direction:column;gap:9px}
+  .card .name{color:#eef0fa;letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+  .card .planted{color:#8f92ac;font-size:10px;letter-spacing:.05em;line-height:1.5}
+  .card input{width:100%;box-sizing:border-box;font-size:11px}
+  .row{display:flex;gap:8px}
+  .row button{flex:1}
+  .approve{border-color:rgba(170,230,190,.45)}
+  .approve:hover{border-color:rgba(190,255,210,.8)}
+  .dismiss{border-color:rgba(230,170,170,.35)}
+  #empty{color:#8f92ac;padding:40px 0}
+  #msg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);color:#eef0fa;
+    background:rgba(20,21,34,.9);border:1px solid rgba(200,205,230,.3);padding:10px 18px;
+    border-radius:2px;opacity:0;transition:opacity .3s;pointer-events:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>镜花水月 · the growing garden</h1>
+  <div class="sub">flowers visitors grew, waiting for your eye. approve to plant them in the public garden.</div>
+  <div id="tokenrow">
+    <input id="token" type="password" placeholder="admin token" style="flex:1">
+    <button id="load">tend the garden</button>
+  </div>
+  <div id="grid"></div>
+  <div id="empty" style="display:none">nothing waiting — the garden is tended.</div>
+  <h1 style="margin-top:46px">in the public garden</h1>
+  <div class="sub">planted for everyone. rename or let one go any time.</div>
+  <div id="planted"></div>
+</main>
+<div id="msg"></div>
+<script>
+const API = 'https://liquid-garden-api.vercel.app';
+const tokenIn = document.getElementById('token');
+const grid = document.getElementById('grid');
+const empty = document.getElementById('empty');
+tokenIn.value = localStorage.getItem('lg_admin') || '';
+
+const MOODS = ['prism','fog','rainbow','mirror','smoke','moonlit','gold','aurora','frost','dusk','pool','pearl'];
+function moodFor(s){ let h = 0; for (const c of s) h = (h*31 + c.charCodeAt(0)) >>> 0; return MOODS[h % MOODS.length]; }
+function suggest(name, slug){
+  const n = name.replace(/-/g, ' ');
+  return n.charAt(0).toUpperCase() + n.slice(1) + ' · ' + moodFor(slug);
+}
+function msg(t){
+  const m = document.getElementById('msg');
+  m.textContent = t; m.style.opacity = 1;
+  setTimeout(() => m.style.opacity = 0, 2600);
+}
+async function call(path, opts){
+  const r = await fetch(API + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'x-token': tokenIn.value.trim(), ...(opts||{}).headers },
+  });
+  if (r.status === 401) throw new Error('wrong token');
+  return r.json();
+}
+async function load(){
+  localStorage.setItem('lg_admin', tokenIn.value.trim());
+  grid.innerHTML = ''; empty.style.display = 'none';
+  document.getElementById('planted').innerHTML = '';
+  let data;
+  try { data = await call('/api/review'); }
+  catch(e){ return msg(String(e.message || e)); }
+  const items = data.pending || [];
+  renderPlanted(data.planted || []);
+  if (!items.length){ empty.style.display = ''; return; }
+  for (const it of items){
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img src="${it.url}" alt="">
+      <div class="meta">
+        <div class="name">${it.name}</div>
+        <div class="planted">${it.planted
+          ? 'planted ' + new Date(it.planted.at).toLocaleString() +
+            '<br>from ' + (it.planted.place || it.planted.ip) +
+            (it.planted.ua ? ' · ' + (/(iPhone|iPad|Android|Mobile)/i.test(it.planted.ua) ? 'mobile' : 'laptop') : '') +
+            '<br><span style="opacity:.55">' + it.planted.ip + '</span>'
+          : 'planted before records began'}</div>
+        <input value="${suggest(it.name, it.slug)}" aria-label="public label">
+        <div class="row">
+          <button class="approve">plant it</button>
+          <button class="dismiss">let it go</button>
+        </div>
+      </div>`;
+    const label = card.querySelector('input');
+    card.querySelector('.approve').onclick = async () => {
+      await call('/api/review', { method: 'POST', body: JSON.stringify({ slug: it.slug, label: label.value, approve: true }) });
+      card.remove(); msg(label.value + ' planted in the public garden');
+      if (!grid.children.length) empty.style.display = '';
+    };
+    card.querySelector('.dismiss').onclick = async () => {
+      await call('/api/review', { method: 'POST', body: JSON.stringify({ slug: it.slug, approve: false }) });
+      card.remove(); msg('let go');
+      if (!grid.children.length) empty.style.display = '';
+    };
+    grid.appendChild(card);
+  }
+}
+function renderPlanted(list){
+  const box = document.getElementById('planted');
+  if (!list.length){ box.innerHTML = '<div id="empty2" style="color:#8f92ac">nothing planted yet</div>'; return; }
+  for (const it of list){
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img src="${it.url}" alt="">
+      <div class="meta">
+        <div class="planted">${it.planted && it.planted.place ? 'from ' + it.planted.place : ''}</div>
+        <input value="${it.label}" aria-label="public label">
+        <div class="row">
+          <button class="approve">rename</button>
+          <button class="dismiss">unplant</button>
+        </div>
+      </div>`;
+    const label = card.querySelector('input');
+    card.querySelector('.approve').onclick = async () => {
+      await call('/api/review', { method: 'POST', body: JSON.stringify({ slug: it.slug, label: label.value, approve: true }) });
+      msg('renamed to ' + label.value);
+    };
+    card.querySelector('.dismiss').onclick = async () => {
+      await call('/api/review', { method: 'POST', body: JSON.stringify({ slug: it.slug, approve: false, back: true }) });
+      card.remove(); msg('unplanted — back among the waiting');
+    };
+    box.appendChild(card);
+  }
+}
+document.getElementById('load').onclick = load;
+tokenIn.addEventListener('keydown', e => { if (e.key === 'Enter') load(); });
+if (tokenIn.value) load();
+</script>
+</body>
+</html>
