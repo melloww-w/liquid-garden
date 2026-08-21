@@ -370,7 +370,7 @@ let byokKey = localStorage.getItem('lg_key') || '';
 if (location.protocol !== 'file:'){
   fetch('/status', { method: 'POST' }).then(r => r.json()).then(s => {
     serverMode = !!s.key;
-    if (serverMode) document.getElementById('growlink').style.display = '';
+    if (serverMode) growIn.style.display = '';   // local garden: grow freely, no key needed
   }).catch(() => {});
   fetch('/grown').then(r => r.json())
     .then(list => list.forEach(s => addGrownOption(s)))
