@@ -434,6 +434,7 @@ function loadTex(key){
   const gen = ++loadGen;                  // stale decodes must not win
   if (texCache[key]){ uploadTex(texCache[key]); return; }
   const im = new Image();
+  im.crossOrigin = 'anonymous';   // blob-hosted flowers must not taint the canvas
   im.onload = () => {
     texCache[key] = im;
     if (gen === loadGen){ uploadTex(im); if (!window.__warmed){ window.__warmed = 1; preloadRest(key); } }
@@ -447,6 +448,7 @@ function preloadRest(current){
   const next = () => {
     if (i >= rest.length) return;
     const im = new Image();
+    im.crossOrigin = 'anonymous';
     im.onload = im.onerror = () => setTimeout(next, 120);
     im.src = IMAGES[rest[i++]];
   };
