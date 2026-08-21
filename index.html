@@ -566,7 +566,7 @@ function labelFor(slug){
   return nm.charAt(0).toUpperCase() + nm.slice(1) + ' · ' + moodFor(slug);
 }
 let grownGroup = null;
-function addGrownOption(slug, fresh){
+function addGrownOption(slug, fresh, label){
   IMAGES[slug] = IMAGES[slug] || '/liquid-garden/gen/' + slug + '.jpg';
   if (!grownGroup){
     grownGroup = document.createElement('optgroup');
@@ -577,22 +577,28 @@ function addGrownOption(slug, fresh){
   if (o) return o;                       // already curated: keep its given name
   o = document.createElement('option');
   o.value = slug;
-  o.textContent = (fresh ? '✦ ' : '') + labelFor(slug);
+  o.textContent = (fresh ? '✦ ' : '') + (label || labelFor(slug));
   grownGroup.appendChild(o);
   return o;
 }
-// two ways to grow: a local server with its own key, or the visitor's key (BYOK)
+// growing: local server > shared garden (free, 1/day) > visitor's own key
+const GARDEN_API = 'https://liquid-garden-api.vercel.app';
 let serverMode = false;
 let byokKey = localStorage.getItem('lg_key') || '';
 if (location.protocol !== 'file:'){
   fetch('/status', { method: 'POST' }).then(r => r.json()).then(s => {
     serverMode = !!s.key;
-    /* local garden: serverMode means no key needed */
   }).catch(() => {});
   fetch('/grown').then(r => r.json())
     .then(list => list.forEach(s => addGrownOption(s)))
     .catch(() => {});
 }
+fetch(GARDEN_API + '/api/garden').then(r => r.json()).then(list => {
+  list.forEach(f => {
+    IMAGES[f.slug] = IMAGES[f.slug] || f.url;
+    addGrownOption(f.slug, false, f.label);
+  });
+}).catch(() => {});
 
 // this browser's own grown garden (BYOK flowers live in IndexedDB, private)
 function idb(){
@@ -838,13 +844,7 @@ growIn.addEventListener('keydown', async e => {
   };
   if (name.length < 2 || name.length > 40 || !/^[\p{L}][\p{L} \-']*$/u.test(name))
     return refuse('please name a real flower');
-  if (!serverMode && !byokKey){          // visitors bring their own key
-    refreshForget();
-    keyPanel.classList.add('open');
-    keyIn.focus();
-    say('growing needs your own openai key');
-    return;
-  }
+
   growIn.disabled = true;
   growIn.classList.add('busy');
   document.getElementById('ui').classList.add('growing');
@@ -862,6 +862,21 @@ growIn.addEventListener('keydown', async e => {
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'generation failed');
       slug = j.slug;
+    } else if (!byokKey){
+      // the shared garden: free, one new flower a day, cached for everyone
+      const r = await fetch(GARDEN_API + '/api/grow', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ flower: name }),
+      });
+      const j = await r.json();
+      if (r.status === 429){
+        refreshForget();
+        keyPanel.classList.add('open');
+        throw new Error(j.error + ' — or plant your own key to keep growing');
+      }
+      if (!r.ok) throw new Error(j.error || 'generation failed');
+      slug = j.slug;
+      IMAGES[slug] = j.url;
     } else {
       slug = slugify(name);
       if (!slug) throw new Error('give the flower a name');
