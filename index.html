@@ -3,12 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Liquid Garden — Photo</title>
+<title>镜花水月</title>
+<meta name="description" content="Flowers in a mirror, moon in water. Move to make waves in a garden of liquid light.">
+<meta name="theme-color" content="#07070d">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="镜花水月">
+<meta property="og:type" content="website">
+<meta property="og:title" content="镜花水月">
+<meta property="og:description" content="Flowers in a mirror, moon in water. Move to make waves in a garden of liquid light.">
+<meta property="og:image" content="https://melloww-w.github.io/liquid-garden/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://melloww-w.github.io/liquid-garden/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="镜花水月">
+<meta name="twitter:description" content="Flowers in a mirror, moon in water. Move to make waves in a garden of liquid light.">
+<meta name="twitter:image" content="https://melloww-w.github.io/liquid-garden/og.jpg">
 <style>
-  html,body{margin:0;height:100%;background:#07070c;overflow:hidden;overscroll-behavior:none}
-  #bg{position:absolute;inset:0;background-size:100% 100%;background-position:center;
+  html,body{margin:0;padding:0;width:100%;height:100%;max-width:100%;max-height:100%;
+      background:#07070c;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0}
+  #bg{position:fixed;inset:0;max-width:100%;max-height:100%;background-size:100% 100%;background-position:center;
       filter:blur(34px) brightness(.45) saturate(1.1);transform:scale(1.12);
       transition:background-image .6s}
+  #c.full{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;
+      max-width:100%;max-height:100%;transform:none}
   #c{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:block;cursor:crosshair;touch-action:none;
       box-shadow:0 0 60px rgba(0,0,0,.55)}
   #ui{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:flex;
@@ -43,6 +65,99 @@
       letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;cursor:pointer;border-radius:2px}
   #keybtns button:hover{border-color:rgba(220,225,255,.7)}
   #keybtns a{color:#9fa6cf}
+  /* ---- growing state (shared by all skins) ---- */
+  #prog{position:absolute;left:0;right:0;bottom:-1px;height:1px;overflow:hidden;opacity:0;transition:opacity .4s}
+  #ui.growing #prog{opacity:1}
+  #prog i{display:block;height:100%;width:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
+      transform:translateX(-100%);animation:sweep 2.2s ease-in-out infinite}
+  @keyframes sweep{to{transform:translateX(100%)}}
+  #ui.growing #menubtn,#ui.growing #grow{color:#f2f4ff}
+
+  /* ---- skin A · one bar: menu and naming share a single vessel ---- */
+  #ui.ui-a .bar{position:relative;display:flex;align-items:stretch;
+      background:rgba(58,60,84,.45);border:1px solid rgba(200,205,230,.32);
+      border-radius:2px;backdrop-filter:blur(8px);overflow:visible}
+  #ui.ui-a #menu{width:200px}
+  #ui.ui-a #menubtn{border:none;background:none;border-radius:0;backdrop-filter:none}
+  #ui.ui-a #grow{border:none;background:none;border-left:1px solid rgba(200,205,230,.25);
+      border-radius:0;backdrop-filter:none;width:176px;text-align:center}
+
+  /* ---- skin B · hairline: no boxes, just text on rules ---- */
+  #ui.ui-b .bar{position:relative;display:flex;align-items:center;gap:0}
+  #ui.ui-b #menu{width:auto;min-width:190px}
+  #ui.ui-b #menubtn,#ui.ui-b #grow{background:none;border:none;border-radius:0;backdrop-filter:none;
+      padding:9px 14px;color:#f0f2fb;
+      text-shadow:0 1px 6px rgba(0,0,0,.95),0 0 3px rgba(0,0,0,.85)}
+  #ui.ui-b .bar{flex-direction:column;align-items:stretch;gap:0}
+  #ui.ui-b #menu{width:100%;flex:none}
+  #ui.ui-b .growrow{display:flex;align-items:center;justify-content:center;gap:0;
+      padding:2px 10px;margin:4px 22px 0;border:none;border-top:1px solid rgba(210,215,238,.4);
+      border-radius:2px;transition:box-shadow .5s;position:relative}
+  #ui.ui-b .growrow:focus-within{box-shadow:0 8px 30px -12px rgba(214,206,255,.75)}
+  #ui.ui-b #grow{flex:1 1 auto;width:auto;border:none;text-align:center;padding:9px 2px;
+      font-size:10.5px;letter-spacing:.2em;color:#eceefb}
+  #ui.ui-b #grow::placeholder{color:#b9bcd4}
+  #ui.ui-b .growrow #grow{flex:0 1 auto;min-width:0;width:auto;
+      field-sizing:content;max-width:min(74vw,300px)}
+  #ui.ui-b #spark{margin-right:5px;flex:none}
+  #ui.ui-b #grow:focus::placeholder{color:#c9cbe4}
+  #spark{color:#efe6ff;font-size:11px;text-shadow:0 0 9px rgba(216,200,255,.95),0 0 20px rgba(180,170,255,.5);
+      animation:twinkle 3.6s ease-in-out infinite;pointer-events:none}
+  .growrow:focus-within #spark{animation-duration:1.8s}
+  @keyframes twinkle{0%,100%{opacity:.5;transform:scale(.85) rotate(0deg)}
+                     50%{opacity:1;transform:scale(1.2) rotate(30deg)}}
+  #ui.growing #spark{animation:spinstar 2.4s linear infinite;color:#fff}
+  @keyframes spinstar{to{transform:rotate(360deg) scale(1.1)}}
+  #ui.growing .growrow{box-shadow:0 8px 36px -10px rgba(220,212,255,.85)}
+  #ui.ui-b #menubtn:hover,#ui.ui-b #grow:focus{border-bottom-color:rgba(240,244,255,.85)}
+  #ui.ui-b #menu{position:static}          /* list anchors to the full bar */
+  #ui.ui-b #menulist{left:0;right:0;width:auto;background:rgba(20,21,34,.88)}
+
+  /* ---- skin C · plaque: a museum wall label ---- */
+  #ui.ui-c .bar{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
+      background:rgba(10,10,20,.62);border:1px solid rgba(200,205,230,.28);
+      padding:12px 22px 10px;border-radius:2px;backdrop-filter:blur(10px)}
+  #ui.ui-c #menu{width:auto;min-width:210px}
+  #ui.ui-c #menubtn{background:none;border:none;border-radius:0;backdrop-filter:none;
+      font-size:13px;letter-spacing:.26em;padding:4px 8px}
+  #ui.ui-c #grow{background:none;border:none;border-radius:0;backdrop-filter:none;
+      width:210px;text-align:center;font-size:10px;letter-spacing:.2em;color:#a9adc8;padding:4px}
+  #ui.ui-c #grow:focus{color:#e6e8f4}
+  #ui.ui-c #menulist{bottom:calc(100% + 14px)}
+
+  /* ---- mobile-first sizing: fluid controls, capped on wider screens ---- */
+  #ui{width:min(100vw - 24px, 420px);box-sizing:border-box;bottom:0;
+      padding:38px 14px calc(18px + env(safe-area-inset-bottom,0))}
+  /* scrim sits behind the controls; on #ui it would clip the dropdown */
+  #ui::before{content:'';position:absolute;left:50%;transform:translateX(-50%);width:100vw;
+      bottom:0;top:0;z-index:-1;pointer-events:none;
+      background:linear-gradient(to top,rgba(6,6,13,.66) 40%,rgba(6,6,13,.34) 72%,transparent)}
+  #ui *,#ui *::before{box-sizing:border-box}
+  #ui .bar{width:100%}
+  #ui.ui-a #menu,#ui.ui-b #menu,#ui.ui-c #menu{width:auto;flex:1.25 1 0;min-width:0}
+  #ui.ui-a #grow,#ui.ui-b #grow,#ui.ui-c #grow{width:auto;flex:.85 1 0;min-width:0}
+  #ui.ui-c #menu,#ui.ui-c #grow{flex:none;width:100%}
+  #menubtn,#grow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media (pointer:coarse){
+    #menubtn,#grow{padding-top:13px;padding-bottom:13px}
+    #menulist button{padding-top:14px;padding-bottom:14px}
+    #hint{bottom:126px}
+  }
+  @media (max-height:520px){
+    #ui{padding:22px 14px calc(10px + env(safe-area-inset-bottom,0))}
+    #ui.ui-b #menubtn,#ui.ui-b #grow{padding-top:6px;padding-bottom:6px}
+    #menulist{max-height:64vh}
+    #hint{bottom:86px;font-size:9px}
+  }
+  @media (max-width:360px){
+    #ui.ui-b #menubtn{font-size:11px;letter-spacing:.1em}
+    #ui.ui-b #grow{font-size:10px;letter-spacing:.14em}
+  }
+  #ui.bleed{width:100%;max-width:100%;padding-left:0;padding-right:0}
+  #ui.bleed #menubtn,#ui.bleed #grow{padding-left:18px;padding-right:18px}
+  #ui.bleed #menulist{left:0;right:0;width:auto;border-left:none;border-right:none;border-radius:0}
+  #ui.bleed .growrow{padding-left:14px;padding-right:14px;margin-left:26px;margin-right:26px}
   #grow.busy{animation:growpulse 1.3s ease-in-out infinite}
   #grow.busy::placeholder{color:#d6daf0}
   @keyframes growpulse{50%{border-color:rgba(235,240,255,.85);box-shadow:0 0 14px rgba(200,210,255,.35)}}
@@ -56,24 +171,30 @@
   #menubtn:hover,#menubtn:focus-visible{border-color:rgba(220,225,255,.65);outline:none}
   #menulist{position:absolute;bottom:calc(100% + 8px);left:0;width:100%;display:none;flex-direction:column;
       background:rgba(58,60,84,.72);border:1px solid rgba(200,205,230,.32);border-radius:2px;
-      backdrop-filter:blur(12px);max-height:44vh;overflow:auto;z-index:6}
+      backdrop-filter:blur(12px);max-height:min(52vh,420px);overflow:auto;z-index:6;
+      scrollbar-width:none;
+      padding-bottom:20px;
+      -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);
+      mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent)}
+  #menulist::-webkit-scrollbar{display:none}
   #menulist.open{display:flex}
   #menulist .grp{padding:10px 16px 4px;color:#b6bad4;font-size:9px;letter-spacing:.24em;text-transform:uppercase;text-align:left}
   #menulist button{background:none;border:none;color:#e6e8f4;font:inherit;letter-spacing:.12em;text-transform:uppercase;
-      padding:10px 16px;cursor:pointer;text-align:left;flex-shrink:0}
+      padding:10px 16px;cursor:pointer;text-align:left;flex-shrink:0;white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis}
   #menulist button:hover,#menulist button:focus-visible{background:rgba(210,218,245,.16);outline:none}
   #menulist button[aria-selected="true"]{color:#fff;background:rgba(210,218,245,.08)}
-  #hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);color:#eef0fa;
+  #hint{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);color:#eef0fa;
       font:10px/1 "Courier New",monospace;letter-spacing:.22em;text-transform:uppercase;pointer-events:none;
-      transition:opacity 1s;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis;
+      transition:opacity 1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
       text-shadow:0 1px 7px rgba(0,0,0,.95), 0 0 3px rgba(0,0,0,.95), 0 2px 14px rgba(0,0,0,.8)}
 </style>
 </head>
 <body>
 <div id="bg"></div>
 <canvas id="c"></canvas>
-<div id="hint">move to make waves</div>
-<div id="ui">
+<div id="hint">move to make waves · space for another flower</div>
+<div id="ui" class="ui-b">
   <select id="pick" aria-label="flower">
     <option value="glass-hibiscus" selected>Hibiscus · glass</option>
     <option value="prism-peony">Peony · prism</option>
@@ -86,12 +207,18 @@
     <option value="blossom-drift">Cherry blossom · drift</option>
     <option value="queen-of-night">Queen of the Night · moon</option>
   </select>
-  <div id="menu">
-    <div id="menulist" role="listbox"></div>
-    <button id="menubtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button>
+  <div class="bar">
+    <div id="menu">
+      <div id="menulist" role="listbox"></div>
+      <button id="menubtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button>
+    </div>
+    <div class="growrow" style="display:none">
+      <span id="spark">✦</span>
+      <input id="grow" type="text" size="14" placeholder="grow a flower" spellcheck="false" autocomplete="off">
+    </div>
+    <div id="prog"><i></i></div>
   </div>
   <button id="growlink" type="button">✦ grow your own</button>
-  <input id="grow" type="text" placeholder="grow a flower…" spellcheck="false" autocomplete="off" style="display:none">
 </div>
 <div id="keypanel">
   <div>uses <b>your own</b> openai key — it stays in this browser, goes only to openai. ~$0.05 per flower.</div>
@@ -152,7 +279,11 @@ void main(){
 
   // photo stays vertical, stretched across the full screen;
   // slight overscan so the liquid warp never reveals the image edge
-  vec2 tuv = vUv*(1.-2.*.04) + .04;
+  // cover-fit: fill the frame, keep the photo's true proportions
+  float sA = uRes.x/uRes.y, tA = uTexRes.x/uTexRes.y;
+  vec2 tuv = vUv - .5;
+  if (sA > tA) tuv.y *= tA/sA; else tuv.x *= sA/tA;
+  tuv = (tuv + .5)*(1.-2.*.04) + .04;
 
   vec2 rd = rippleField(uv);
   float n1 = fbm(uv*2.0 + uTime*.055);
@@ -219,7 +350,7 @@ const loc = gl.getAttribLocation(prog, 'aP');
 gl.enableVertexAttribArray(loc);
 gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 const U = {};
-['uRes','uTime','uRipples','uTex','uCount','uMotion','uGrade','uGradeAmt'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+['uRes','uTexRes','uTime','uRipples','uTex','uCount','uMotion','uGrade','uGradeAmt'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
 
 const tex = gl.createTexture();
 let texW = 1, texH = 1, ready = false, loadGen = 0;
@@ -285,23 +416,48 @@ if (qp.get('color')){
 }
 document.getElementById('pick').addEventListener('change', e => loadTex(e.target.value));
 
-const PHONE = 9/19.5;   // desktop shows a phone-proportioned frame
+const PHONE = 9/16;   // desktop shows a phone-proportioned frame
 const MOBILE = matchMedia('(pointer:coarse)').matches;
 function resize(){
   const dpr = Math.min(devicePixelRatio || 1, 1.5);
-  let w, h;
-  if (MOBILE){
-    // on any touch device: fill the entire screen, whatever its shape
-    w = innerWidth; h = innerHeight;
+  const vw = (window.visualViewport && visualViewport.width) || innerWidth;
+  const vh = (window.visualViewport && visualViewport.height) || innerHeight;
+  if (MOBILE || vw < 560){
+    // phones, tablets, narrow windows: CSS fills the real viewport (dvh handles toolbars)
+    cv.classList.add('full');
+    cv.style.width = ''; cv.style.height = '';
   } else {
-    h = innerHeight; w = Math.round(h*PHONE);
-    if (w > innerWidth){ w = innerWidth; h = Math.round(w/PHONE); }
+    // wider screens: a phone-proportioned frame that always fits the window
+    cv.classList.remove('full');
+    const limW = Math.min(vw, document.documentElement.clientWidth);
+    const limH = Math.min(vh, document.documentElement.clientHeight);
+    let h = limH, w = h*PHONE;
+    if (w > limW*0.94){ w = limW*0.94; h = w/PHONE; }
+    h = Math.min(h, limH); w = Math.min(w, limW);
+    cv.style.width = Math.floor(w)+'px'; cv.style.height = Math.floor(h)+'px';
   }
-  cv.style.width = w+'px'; cv.style.height = h+'px';
-  cv.width = w*dpr; cv.height = h*dpr;
+  // the drawing buffer follows the box the browser actually gave us
+  const box = cv.getBoundingClientRect();
+  const w = Math.max(1, Math.round(box.width)), h = Math.max(1, Math.round(box.height));
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  // the controls belong to the picture: bound them to the frame
+  const uiEl = document.getElementById('ui');
+  const hintEl2 = document.getElementById('hint');
+  const bleed = cv.classList.contains('full');
+  if (uiEl){
+    uiEl.classList.toggle('bleed', bleed);
+    uiEl.style.width = bleed ? w + 'px' : Math.max(180, w - 28) + 'px';
+  }
+  if (hintEl2) hintEl2.style.maxWidth = Math.max(180, w - 28) + 'px';
 }
 addEventListener('resize', resize);
-if (window.visualViewport) visualViewport.addEventListener('resize', resize);
+addEventListener('orientationchange', () => { resize(); setTimeout(resize, 160); });
+if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(cv);
+addEventListener('load', () => requestAnimationFrame(resize));
+if (window.visualViewport){
+  visualViewport.addEventListener('resize', resize);
+  visualViewport.addEventListener('scroll', resize);
+}
 resize();
 
 const NR = 48;
@@ -335,7 +491,9 @@ addEventListener('touchstart', e => {
 }, {passive:true});
 addEventListener('touchmove', e => { const t = e.touches[0]; onMove(t.clientX, t.clientY); }, {passive:true});
 addEventListener('mousedown', e => spawnRipple(e.clientX, e.clientY, .08));
-setTimeout(() => document.getElementById('hint').style.opacity = 0, 8000);
+if (matchMedia('(pointer:coarse)').matches)
+  document.getElementById('hint').textContent = 'drag to make waves · double-tap for another flower';
+setTimeout(() => document.getElementById('hint').style.opacity = 0, 9000);
 
 // grow a new flower: name -> house-style prompt -> gpt-image-1 (via local server)
 const pickEl = document.getElementById('pick');
@@ -345,6 +503,15 @@ function say(msg, hold){
   hintEl.textContent = msg; hintEl.style.opacity = 1;
   if (!hold) setTimeout(() => hintEl.style.opacity = 0, 6000);
 }
+document.getElementById('ui').className =
+  'ui-' + ((new URLSearchParams(location.search)).get('ui') || 'b');
+// ?bare=1 — the artwork alone, for captures and prints
+if ((new URLSearchParams(location.search)).get('bare')){
+  const s = document.createElement('style');
+  s.textContent = '#ui,#hint{display:none!important}';
+  document.head.appendChild(s);
+}
+
 const MOODS = ['moonlit','pearl','mist','dusk','aurora','tide','ember','frost','velvet','halo'];
 function moodFor(s){ let h = 0; for (const c of s) h = (h*31 + c.charCodeAt(0)) >>> 0; return MOODS[h % MOODS.length]; }
 function labelFor(slug){
@@ -370,7 +537,7 @@ let byokKey = localStorage.getItem('lg_key') || '';
 if (location.protocol !== 'file:'){
   fetch('/status', { method: 'POST' }).then(r => r.json()).then(s => {
     serverMode = !!s.key;
-    if (serverMode) growIn.style.display = '';   // local garden: grow freely, no key needed
+    if (serverMode) document.querySelector('.growrow').style.display = 'flex';   // local garden
   }).catch(() => {});
   fetch('/grown').then(r => r.json())
     .then(list => list.forEach(s => addGrownOption(s)))
@@ -508,6 +675,33 @@ menuBtn.addEventListener('click', e => {
 });
 document.addEventListener('click', e => { if (!menuList.contains(e.target) && e.target !== menuBtn) closeMenu(); });
 addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
+// space (or a double-tap) drifts to another flower at random
+function randomFlower(){
+  const opts = [...pickEl.options].map(o => o.value).filter(v => v !== pickEl.value);
+  if (!opts.length) return;
+  const next = opts[Math.floor(Math.random()*opts.length)];
+  pickEl.value = next;
+  pickEl.dispatchEvent(new Event('change'));
+  closeMenu();
+  syncMenu();
+  say(labelFor2(next));
+}
+function labelFor2(v){
+  const o = [...pickEl.options].find(o => o.value === v);
+  return (o ? o.textContent : v).toLowerCase();
+}
+addEventListener('keydown', e => {
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+  if (e.code === 'Space' || e.key === ' '){ e.preventDefault(); randomFlower(); }
+});
+let lastTap = 0;
+cv.addEventListener('touchend', () => {
+  const now2 = performance.now();
+  if (now2 - lastTap < 320) randomFlower();
+  lastTap = now2;
+}, { passive: true });
 new MutationObserver(buildMenu).observe(pickEl, { childList: true, subtree: true });
 buildMenu();
 setInterval(syncMenu, 800);   // catch programmatic value changes (deep links, grow)
@@ -517,8 +711,8 @@ if (location.hash === '#key'){ refreshForget(); keyPanel.classList.add('open'); 
 growLink.addEventListener('click', () => {
   const open = growIn.style.display !== 'none' || keyPanel.classList.contains('open');
   keyPanel.classList.remove('open');
-  if (open){ growIn.style.display = 'none'; return; }
-  if (serverMode || byokKey){ growIn.style.display = ''; growIn.focus(); }
+  if (open){ document.querySelector('.growrow').style.display = 'none'; return; }
+  if (serverMode || byokKey){ document.querySelector('.growrow').style.display = 'flex'; growIn.focus(); }
   else { refreshForget(); keyPanel.classList.add('open'); keyIn.focus(); }
 });
 document.getElementById('keysave').addEventListener('click', () => {
@@ -528,7 +722,7 @@ document.getElementById('keysave').addEventListener('click', () => {
   if (keyRemember.checked) localStorage.setItem('lg_key', k);
   keyIn.value = '';
   keyPanel.classList.remove('open');
-  growIn.style.display = '';
+  document.querySelector('.growrow').style.display = 'flex';
   growIn.focus();
   say('the key is planted — name a flower');
 });
@@ -544,10 +738,11 @@ growIn.addEventListener('keydown', async e => {
   if (!name || growIn.disabled) return;
   growIn.disabled = true;
   growIn.classList.add('busy');
+  document.getElementById('ui').classList.add('growing');
   growIn.value = '';
   const ph = growIn.placeholder;
-  growIn.placeholder = 'growing ' + name.toLowerCase() + '… ~40s';
-  say('growing ' + name.toLowerCase() + '… the garden takes about forty seconds', true);
+  growIn.placeholder = 'growing ' + name.toLowerCase() + '…';
+  say('the garden is growing ' + name.toLowerCase(), true);
   try {
     let slug;
     if (serverMode){
@@ -575,6 +770,7 @@ growIn.addEventListener('keydown', async e => {
     say(String(err.message || err).slice(0, 70).toLowerCase());
   }
   growIn.classList.remove('busy');
+  document.getElementById('ui').classList.remove('growing');
   growIn.placeholder = ph;
   growIn.disabled = false;
 });
@@ -592,6 +788,7 @@ function frame(){
       ripples[i*4+2] = live[i].t; ripples[i*4+3] = live[i].amp;
     }
     gl.uniform2f(U.uRes, cv.width, cv.height);
+    gl.uniform2f(U.uTexRes, texW, texH);
     gl.uniform1f(U.uTime, now);
     gl.uniform4fv(U.uRipples, ripples);
     gl.uniform1f(U.uCount, live.length);

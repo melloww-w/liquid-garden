@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="water" cx="50%" cy="42%" r="72%">
+      <stop offset="0%" stop-color="#1b1a2b"/>
+      <stop offset="60%" stop-color="#0d0d18"/>
+      <stop offset="100%" stop-color="#07070d"/>
+    </radialGradient>
+    <radialGradient id="petal" cx="50%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#fdf6ec" stop-opacity=".97"/>
+      <stop offset="55%" stop-color="#f0d8dd" stop-opacity=".9"/>
+      <stop offset="100%" stop-color="#c9a9c4" stop-opacity=".72"/>
+    </radialGradient>
+    <radialGradient id="heart" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff3cf"/>
+      <stop offset="45%" stop-color="#f2c264"/>
+      <stop offset="100%" stop-color="#b8823a"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe9b8" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#ffe9b8" stop-opacity="0"/>
+    </radialGradient>
+    <g id="star">
+      <path d="M0 -5.4 L1 -1 L5.4 0 L1 1 L0 5.4 L-1 1 L-5.4 0 L-1 -1 Z" fill="#fffaf0"/>
+    </g>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="url(#water)"/>
+
+  <!-- ripples -->
+  <g fill="none" stroke="#9fb4c9" stroke-opacity=".16">
+    <ellipse cx="32" cy="34" rx="25" ry="9"/>
+    <ellipse cx="32" cy="34" rx="18" ry="6.2"/>
+  </g>
+
+  <circle cx="32" cy="31" r="17" fill="url(#glow)"/>
+
+  <!-- six petals -->
+  <g transform="translate(32 31)">
+    <g fill="url(#petal)">
+      <ellipse cx="0" cy="-9.6" rx="5.1" ry="9.9"/>
+      <ellipse cx="0" cy="-9.6" rx="5.1" ry="9.9" transform="rotate(60)"/>
+      <ellipse cx="0" cy="-9.6" rx="5.1" ry="9.9" transform="rotate(120)"/>
+      <ellipse cx="0" cy="-9.6" rx="5.1" ry="9.9" transform="rotate(180)"/>
+      <ellipse cx="0" cy="-9.6" rx="5.1" ry="9.9" transform="rotate(240)"/>
+      <ellipse cx="0" cy="-9.6" rx="5.1" ry="9.9" transform="rotate(300)"/>
+    </g>
+    <circle r="4.4" fill="url(#heart)"/>
+    <circle r="1.5" fill="#fff6dd" fill-opacity=".9"/>
+  </g>
+
+  <!-- glints -->
+  <g>
+    <use href="#star" transform="translate(48 16) scale(.85)"/>
+    <use href="#star" transform="translate(14 22) scale(.6)" opacity=".85"/>
+    <use href="#star" transform="translate(45 45) scale(.5)" opacity=".7"/>
+    <use href="#star" transform="translate(20 47) scale(.38)" opacity=".6"/>
+  </g>
+</svg>
