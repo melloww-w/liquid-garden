@@ -233,15 +233,24 @@ if (qp.get('color')){
 }
 document.getElementById('pick').addEventListener('change', e => loadTex(e.target.value));
 
-const PHONE = 9/19.5;   // standard phone aspect, held vertical
+const PHONE = 9/19.5;   // desktop shows a phone-proportioned frame
+const MOBILE = matchMedia('(pointer:coarse)').matches;
 function resize(){
   const dpr = Math.min(devicePixelRatio || 1, 1.5);
-  let h = innerHeight, w = Math.round(h*PHONE);
-  if (w > innerWidth){ w = innerWidth; h = Math.round(w/PHONE); }
+  let w, h;
+  if (MOBILE){
+    // on any touch device: fill the entire screen, whatever its shape
+    w = innerWidth; h = innerHeight;
+  } else {
+    h = innerHeight; w = Math.round(h*PHONE);
+    if (w > innerWidth){ w = innerWidth; h = Math.round(w/PHONE); }
+  }
   cv.style.width = w+'px'; cv.style.height = h+'px';
   cv.width = w*dpr; cv.height = h*dpr;
 }
-addEventListener('resize', resize); resize();
+addEventListener('resize', resize);
+if (window.visualViewport) visualViewport.addEventListener('resize', resize);
+resize();
 
 const NR = 48;
 const ripples = new Float32Array(NR*4);
