@@ -19,8 +19,11 @@
       backdrop-filter:blur(6px);border-radius:2px;width:110px;transition:border-color .3s}
   #ui input:focus{border-color:rgba(220,225,255,.65)}
   #ui input::placeholder{color:#6a6c82}
-  @media (pointer:coarse){ #ui input,#ui select{font-size:16px} }
-  #growlink{background:none;border:none;color:#e2e4f2;
+  @media (pointer:coarse){
+    #ui input,#menubtn,#menulist button,#keypanel input[type=password]{font-size:16px}
+    #keypanel{bottom:auto;top:9vh}
+  }
+  #growlink{display:none;background:none;border:none;color:#e2e4f2;
       font:11px "Courier Prime","Courier New",monospace;letter-spacing:.22em;text-transform:uppercase;
       cursor:pointer;padding:8px 12px;
       text-shadow:0 1px 5px rgba(0,0,0,.9), 0 0 2px rgba(0,0,0,.7);transition:color .3s}
@@ -43,17 +46,27 @@
   #grow.busy{animation:growpulse 1.3s ease-in-out infinite}
   #grow.busy::placeholder{color:#d6daf0}
   @keyframes growpulse{50%{border-color:rgba(235,240,255,.85);box-shadow:0 0 14px rgba(200,210,255,.35)}}
-  #ui select{width:232px;text-align:center;text-align-last:center;background:rgba(58,60,84,.45);border:1px solid rgba(200,205,230,.32);color:#e6e8f4;
+  #ui select{display:none}
+  #menu{position:relative;width:232px}
+  #menubtn{width:100%;text-align:center;background:rgba(58,60,84,.45);border:1px solid rgba(200,205,230,.32);color:#e6e8f4;
       font:inherit;letter-spacing:.12em;text-transform:uppercase;padding:10px 34px 10px 14px;outline:none;
       backdrop-filter:blur(6px);border-radius:2px;cursor:pointer;appearance:none;-webkit-appearance:none;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%238f91a8'/%3E%3C/svg%3E");
       background-repeat:no-repeat;background-position:right 12px center}
-  #ui select option{background:#0c0c16;color:#d8dae8;text-transform:none}
+  #menubtn:hover,#menubtn:focus-visible{border-color:rgba(220,225,255,.65);outline:none}
+  #menulist{position:absolute;bottom:calc(100% + 8px);left:0;width:100%;display:none;flex-direction:column;
+      background:rgba(58,60,84,.72);border:1px solid rgba(200,205,230,.32);border-radius:2px;
+      backdrop-filter:blur(12px);max-height:44vh;overflow:auto;z-index:6}
+  #menulist.open{display:flex}
+  #menulist .grp{padding:10px 12px 4px;color:#b6bad4;font-size:9px;letter-spacing:.24em;text-transform:uppercase;text-align:center}
+  #menulist button{background:none;border:none;color:#e6e8f4;font:inherit;letter-spacing:.12em;text-transform:uppercase;
+      padding:10px 12px;cursor:pointer;text-align:center;flex-shrink:0}
+  #menulist button:hover,#menulist button:focus-visible{background:rgba(210,218,245,.16);outline:none}
+  #menulist button[aria-selected="true"]{color:#fff;background:rgba(210,218,245,.08)}
   #hint{position:fixed;left:50%;bottom:132px;transform:translateX(-50%);color:#eef0fa;
       font:10px/1 "Courier New",monospace;letter-spacing:.22em;text-transform:uppercase;pointer-events:none;
       transition:opacity 1s;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis;
-      background:rgba(8,8,16,.55);padding:8px 14px;border-radius:2px;backdrop-filter:blur(6px);
-      text-shadow:0 1px 6px rgba(0,0,0,.95), 0 0 2px rgba(0,0,0,.9)}
+      text-shadow:0 1px 7px rgba(0,0,0,.95), 0 0 3px rgba(0,0,0,.95), 0 2px 14px rgba(0,0,0,.8)}
 </style>
 </head>
 <body>
@@ -73,13 +86,15 @@
     <option value="blossom-drift">Cherry blossom · drift</option>
     <option value="queen-of-night">Queen of the Night · moon</option>
   </select>
+  <div id="menu">
+    <div id="menulist" role="listbox"></div>
+    <button id="menubtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button>
+  </div>
   <button id="growlink" type="button">✦ grow your own</button>
   <input id="grow" type="text" placeholder="grow a flower…" spellcheck="false" autocomplete="off" style="display:none">
 </div>
 <div id="keypanel">
-  <div>growing flowers uses <b>your own</b> openai key. it stays in this
-  browser — requests go straight to openai, never to us. each flower costs
-  about $0.03–0.08 on your account. tip: use a project key with a spend limit.</div>
+  <div>uses <b>your own</b> openai key — it stays in this browser, goes only to openai. ~$0.05 per flower.</div>
   <input id="keyin" type="password" placeholder="sk-…" spellcheck="false" autocomplete="off">
   <label id="keyrow"><input id="keyremember" type="checkbox"> remember on this device</label>
   <div id="keybtns">
@@ -355,6 +370,7 @@ let byokKey = localStorage.getItem('lg_key') || '';
 if (location.protocol !== 'file:'){
   fetch('/status', { method: 'POST' }).then(r => r.json()).then(s => {
     serverMode = !!s.key;
+    if (serverMode) document.getElementById('growlink').style.display = '';
   }).catch(() => {});
   fetch('/grown').then(r => r.json())
     .then(list => list.forEach(s => addGrownOption(s)))
@@ -444,6 +460,60 @@ const keyIn = document.getElementById('keyin');
 const keyRemember = document.getElementById('keyremember');
 const keyForget = document.getElementById('keyforget');
 function refreshForget(){ keyForget.style.display = localStorage.getItem('lg_key') ? '' : 'none'; }
+// custom dropdown mirroring the hidden select
+const menuBtn = document.getElementById('menubtn');
+const menuList = document.getElementById('menulist');
+function closeMenu(){ menuList.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
+function currentLabel(){
+  const o = [...pickEl.options].find(o => o.value === pickEl.value);
+  return o ? o.textContent : '';
+}
+function syncMenu(){
+  menuBtn.textContent = currentLabel();
+  menuList.querySelectorAll('[role="option"]').forEach(b =>
+    b.setAttribute('aria-selected', String(b.dataset.value === pickEl.value)));
+}
+function buildMenu(){
+  menuList.innerHTML = '';
+  const addRow = opt => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'option');
+    b.dataset.value = opt.value;
+    b.textContent = opt.textContent;
+    b.addEventListener('click', () => {
+      pickEl.value = opt.value;
+      pickEl.dispatchEvent(new Event('change'));
+      closeMenu();
+      syncMenu();
+    });
+    menuList.appendChild(b);
+  };
+  [...pickEl.children].forEach(node => {
+    if (node.tagName === 'OPTGROUP'){
+      const g = document.createElement('div');
+      g.className = 'grp';
+      g.textContent = node.label;
+      menuList.appendChild(g);
+      [...node.children].forEach(addRow);
+    } else addRow(node);
+  });
+  syncMenu();
+}
+menuBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const open = menuList.classList.contains('open');
+  if (open) closeMenu();
+  else { menuList.classList.add('open'); menuBtn.setAttribute('aria-expanded', 'true'); }
+});
+document.addEventListener('click', e => { if (!menuList.contains(e.target) && e.target !== menuBtn) closeMenu(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+new MutationObserver(buildMenu).observe(pickEl, { childList: true, subtree: true });
+buildMenu();
+setInterval(syncMenu, 800);   // catch programmatic value changes (deep links, grow)
+if (location.hash === '#menu') menuBtn.click();
+if (location.hash === '#key'){ refreshForget(); keyPanel.classList.add('open'); }
+
 growLink.addEventListener('click', () => {
   const open = growIn.style.display !== 'none' || keyPanel.classList.contains('open');
   keyPanel.classList.remove('open');
