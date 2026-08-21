@@ -20,9 +20,11 @@
   #ui input:focus{border-color:rgba(220,225,255,.65)}
   #ui input::placeholder{color:#6a6c82}
   @media (pointer:coarse){ #ui input,#ui select{font-size:16px} }
-  #growlink{background:none;border:none;color:#8f92ac;font:10px "Courier Prime","Courier New",monospace;
-      letter-spacing:.22em;text-transform:uppercase;cursor:pointer;padding:6px 4px;transition:color .3s}
-  #growlink:hover,#growlink:focus-visible{color:#e8eaf8;outline:none}
+  #growlink{background:rgba(10,10,18,.5);border:1px solid rgba(200,205,230,.35);color:#dfe2f2;
+      font:11px "Courier Prime","Courier New",monospace;letter-spacing:.22em;text-transform:uppercase;
+      cursor:pointer;padding:9px 16px;border-radius:2px;backdrop-filter:blur(6px);
+      text-shadow:0 1px 4px rgba(0,0,0,.8);transition:border-color .3s,color .3s}
+  #growlink:hover,#growlink:focus-visible{color:#ffffff;border-color:rgba(230,235,255,.8);outline:none}
   #keypanel{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);width:min(440px,92vw);
       background:rgba(9,9,17,.88);border:1px solid rgba(190,195,220,.3);backdrop-filter:blur(10px);
       padding:16px 18px;border-radius:2px;font:11px/1.8 "Courier Prime","Courier New",monospace;color:#c6c9dd;
