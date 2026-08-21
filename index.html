@@ -458,6 +458,9 @@ function loadTex(key){
     texCache[key] = im;
     if (gen === loadGen){ uploadTex(im); if (!window.__warmed){ window.__warmed = 1; preloadRest(key); } }
   };
+  im.onerror = () => {
+    if (gen === loadGen) say('that flower would not load — try another');
+  };
   im.src = IMAGES[key];
 }
 // after the first flower paints, quietly pre-cache the rest
@@ -796,6 +799,7 @@ function closeMenu(){
   menuList.classList.remove('open');
   menuBtn.setAttribute('aria-expanded', 'false');
   document.body.classList.remove('menuopen');
+  if (rebuildQueued) setTimeout(buildMenu, 400);
 }
 function currentLabel(){
   const o = [...pickEl.options].find(o => o.value === pickEl.value);
@@ -806,7 +810,10 @@ function syncMenu(){
   menuList.querySelectorAll('[role="option"]').forEach(b =>
     b.setAttribute('aria-selected', String(b.dataset.value === pickEl.value)));
 }
+let rebuildQueued = false;
 function buildMenu(){
+  if (menuList.classList.contains('open')){ rebuildQueued = true; return; }
+  rebuildQueued = false;
   menuList.innerHTML = '';
   const addRow = opt => {
     const b = document.createElement('button');
