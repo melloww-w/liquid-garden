@@ -870,9 +870,8 @@ growIn.addEventListener('keydown', async e => {
       });
       const j = await r.json();
       if (r.status === 429){
-        refreshForget();
-        keyPanel.classList.add('open');
-        throw new Error(j.error + ' — or plant your own key to keep growing');
+        growLink.style.display = '';        // quiet path for the impatient: their own key
+        throw new Error(j.error);
       }
       if (!r.ok) throw new Error(j.error || 'generation failed');
       slug = j.slug;
