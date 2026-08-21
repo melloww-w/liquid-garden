@@ -221,6 +221,14 @@
       backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
       text-shadow:0 1px 3px rgba(0,0,0,1), 0 1px 8px rgba(0,0,0,.9), 0 0 2px rgba(0,0,0,.9)}
   @keyframes pearl{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
+  body.growing #hint{
+      border-color:rgba(255,236,190,.35);
+      background:linear-gradient(110deg,
+        rgba(38,30,20,.6) 0%, rgba(96,76,44,.55) 38%,
+        rgba(214,184,120,.5) 50%,
+        rgba(96,76,44,.55) 62%, rgba(38,30,20,.6) 100%);
+      background-size:220% 100%;
+      animation:pearl 2.6s ease-in-out infinite}
   @media (prefers-reduced-motion:reduce){ #hint{animation:none} }
   @supports (grid-template-columns: subgrid){
     #menulist{display:grid;grid-template-columns:max-content max-content 1fr;align-content:start}
@@ -286,7 +294,7 @@ uniform sampler2D uTex;
 uniform vec2  uRes, uTexRes;
 uniform float uTime;
 uniform vec4  uRipples[NR];
-uniform float uCount, uMotion;
+uniform float uCount, uMotion, uGrow;
 uniform vec3  uGrade;
 uniform float uGradeAmt;
 
@@ -354,15 +362,17 @@ void main(){
   vec2 cell = floor(gp), fc = fract(gp) - .5;
   float gh = hash21(cell);
   float tw = .5 + .5*sin(uTime*2.4 + gh*44.);
-  float glint = smoothstep(.955,1.,gh) * pow(tw,5.);
+  float glint = smoothstep(.955 - uGrow*.03, 1., gh) * pow(tw, 5. - uGrow*2.);
   float star = (1.-smoothstep(.0,.05,abs(fc.x))) + (1.-smoothstep(.0,.05,abs(fc.y)));
   float dotc = 1.-smoothstep(.05,.16,length(fc));
   // ripples also make the glitter flare up as it catches the light
   float stir = smoothstep(.002,.03,length(rd));
-  col += vec3(1.,.97,.92) * glint * (dotc + star*.45) * smoothstep(.25,.7,lum) * (1.5 + stir*2.2);
+  col += vec3(1.,.97,.92) * glint * (dotc + star*.45) * smoothstep(.25 - uGrow*.2, .7, lum) * (1.5 + stir*2.2 + uGrow*1.6);
 
   float dust = hash21(floor(guv*160.) + floor(uTime*3.)*.37);
-  col += vec3(.9,.95,1.) * step(.992, dust) * smoothstep(.3,.6,lum) * (.35 + stir*.5);
+  col += vec3(.9,.95,1.) * step(.992 - uGrow*.005, dust) * smoothstep(.3 - uGrow*.2, .6, lum) * (.35 + stir*.5 + uGrow*.7);
+  // while growing, the whole pond breathes light
+  col *= 1. + uGrow * .07 * (.5 + .5*sin(uTime*1.7));
 
   float vig = 1. - smoothstep(.5, 1.9, length(uv));
   col *= .55 + .45*vig;
@@ -394,7 +404,7 @@ const loc = gl.getAttribLocation(prog, 'aP');
 gl.enableVertexAttribArray(loc);
 gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 const U = {};
-['uRes','uTexRes','uTime','uRipples','uTex','uCount','uMotion','uGrade','uGradeAmt'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+['uRes','uTexRes','uTime','uRipples','uTex','uCount','uMotion','uGrow','uGrade','uGradeAmt'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
 
 const tex = gl.createTexture();
 let texW = 1, texH = 1, ready = false, loadGen = 0;
@@ -901,6 +911,7 @@ growIn.addEventListener('keydown', async e => {
   growIn.disabled = true;
   growIn.classList.add('busy');
   document.getElementById('ui').classList.add('growing');
+  document.body.classList.add('growing');
   growIn.value = '';
   const ph = growIn.placeholder;
   growIn.placeholder = 'growing ' + name.toLowerCase() + '…';
@@ -947,11 +958,13 @@ growIn.addEventListener('keydown', async e => {
   }
   growIn.classList.remove('busy');
   document.getElementById('ui').classList.remove('growing');
+  document.body.classList.remove('growing');
   growIn.placeholder = ph;
   growIn.disabled = false;
 });
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let growGlow = 0;
 const t0 = performance.now();
 function frame(){
   now = (performance.now() - t0)/1000;
@@ -969,6 +982,9 @@ function frame(){
     gl.uniform4fv(U.uRipples, ripples);
     gl.uniform1f(U.uCount, live.length);
     gl.uniform1f(U.uMotion, REDUCED ? 0 : 1);
+    const growingNow = document.getElementById('ui').classList.contains('growing');
+    growGlow += ((growingNow ? 1 : 0) - growGlow) * .025;
+    gl.uniform1f(U.uGrow, REDUCED ? 0 : growGlow);
     gl.uniform1i(U.uTex, 0);
     const gk = .04;
     gradeAmt += (gradeAmtTgt - gradeAmt)*gk;
