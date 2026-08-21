@@ -158,6 +158,10 @@
   #ui.bleed #menubtn,#ui.bleed #grow{padding-left:18px;padding-right:18px}
   #ui.bleed #menulist{left:26px;right:26px;width:auto}
   #ui.bleed .growrow{padding-left:14px;padding-right:14px;margin-left:26px;margin-right:26px}
+  .growrow.refused{animation:refuse .45s ease}
+  @keyframes refuse{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  .growrow.refused #spark{color:#ffc9c9}
+  #hint.warn{color:#ffd9d9}
   #grow.busy{animation:growpulse 1.3s ease-in-out infinite}
   #grow.busy::placeholder{color:#d6daf0}
   @keyframes growpulse{50%{border-color:rgba(235,240,255,.85);box-shadow:0 0 14px rgba(200,210,255,.35)}}
@@ -631,6 +635,27 @@ const PROMPT = 'Ethereal dreamlike scene of {flower} flowers floating on softly 
 function slugify(s){
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
 }
+async function validateWithKey(name){
+  try {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + byokKey },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'Answer only "yes" or "no". Is the given phrase the name of a real flower, flowering plant, or blossom (any language, common or botanical)?' },
+          { role: 'user', content: name },
+        ],
+        max_completion_tokens: 256,
+      }),
+    });
+    if (!r.ok) return true;                   // validator unavailable: let the art happen
+    const j = await r.json();
+    const said = ((j.choices?.[0]?.message?.content) || '').trim().toLowerCase();
+    return said ? !said.startsWith('no') : true;
+  } catch(e){ return true; }
+}
+
 async function generateWithKey(name){
   let lastErr = null;
   for (const model of ['gpt-image-2', 'gpt-image-1']){
@@ -802,6 +827,17 @@ growIn.addEventListener('keydown', async e => {
   if (e.key !== 'Enter') return;
   const name = growIn.value.trim();
   if (!name || growIn.disabled) return;
+  const refuse = msg => {
+    const row = document.querySelector('.growrow');
+    row.classList.remove('refused');
+    void row.offsetWidth;
+    row.classList.add('refused');
+    hintEl.classList.add('warn');
+    say(msg);
+    setTimeout(() => { row.classList.remove('refused'); hintEl.classList.remove('warn'); }, 6000);
+  };
+  if (name.length < 2 || name.length > 40 || !/^[\p{L}][\p{L} \-']*$/u.test(name))
+    return refuse('please name a real flower');
   if (!serverMode && !byokKey){          // visitors bring their own key
     refreshForget();
     keyPanel.classList.add('open');
@@ -830,6 +866,8 @@ growIn.addEventListener('keydown', async e => {
       slug = slugify(name);
       if (!slug) throw new Error('give the flower a name');
       if (!IMAGES[slug]){
+        if (!(await validateWithKey(name)))
+          throw new Error(`"${name}" is not a flower we know — try a real flower name`);
         const url = await shrink(await generateWithKey(name));
         IMAGES[slug] = url;
         idbPut(slug, url).catch(() => {});
@@ -840,7 +878,9 @@ growIn.addEventListener('keydown', async e => {
     loadTex(slug);
     say(labelFor(slug).toLowerCase() + ' has bloomed — it now lives in the menu');
   } catch(err){
-    say(String(err.message || err).slice(0, 70).toLowerCase());
+    const m = String(err.message || err).toLowerCase();
+    if (m.includes('not a flower') || m.includes('name a real flower')) refuse(m.slice(0, 70));
+    else say(m.slice(0, 70));
   }
   growIn.classList.remove('busy');
   document.getElementById('ui').classList.remove('growing');
