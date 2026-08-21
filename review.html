@@ -76,13 +76,17 @@ async function call(path, opts){
   if (r.status === 401) throw new Error('wrong token');
   return r.json();
 }
+let loading = false;
 async function load(){
+  if (loading) return;                 // one load at a time — no duplicate cards
+  loading = true;
   localStorage.setItem('lg_admin', tokenIn.value.trim());
-  grid.innerHTML = ''; empty.style.display = 'none';
-  document.getElementById('planted').innerHTML = '';
   let data;
   try { data = await call('/api/review'); }
-  catch(e){ return msg(String(e.message || e)); }
+  catch(e){ loading = false; return msg(String(e.message || e)); }
+  loading = false;
+  grid.innerHTML = ''; empty.style.display = 'none';
+  document.getElementById('planted').innerHTML = '';
   const items = data.pending || [];
   renderPlanted(data.planted || []);
   if (!items.length){ empty.style.display = ''; return; }
