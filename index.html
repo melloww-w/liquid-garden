@@ -192,8 +192,12 @@
   }
   #menulist .grp{padding:10px 16px 4px;color:#b6bad4;font-size:9px;letter-spacing:.24em;text-transform:uppercase;text-align:left}
   #menulist button{background:none;border:none;color:#e6e8f4;font:inherit;letter-spacing:.12em;text-transform:uppercase;
-      padding:10px 16px;cursor:pointer;text-align:left;flex-shrink:0;white-space:nowrap;
-      overflow:hidden;text-overflow:ellipsis}
+      padding:10px 14px;cursor:pointer;flex-shrink:0;white-space:nowrap;
+      display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline}
+  #menulist button .l{text-align:right;overflow:hidden;text-overflow:ellipsis}
+  #menulist button .d{padding:0 .6em;opacity:.65}
+  #menulist button .r{text-align:left;overflow:hidden;text-overflow:ellipsis}
+  #menulist button .solo{grid-column:1/-1;text-align:center}
   #menulist button:hover,#menulist button:focus-visible{background:rgba(210,218,245,.16);outline:none}
   #menulist button[aria-selected="true"]{color:#fff;background:rgba(210,218,245,.08)}
   #hint{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);color:#eef0fa;
@@ -659,7 +663,19 @@ function buildMenu(){
     b.type = 'button';
     b.setAttribute('role', 'option');
     b.dataset.value = opt.value;
-    b.textContent = opt.textContent;
+    const parts = opt.textContent.split(' · ');
+    const span = (cls, txt) => {
+      const s = document.createElement('span');
+      s.className = cls; s.textContent = txt;
+      return s;
+    };
+    if (parts.length === 2){
+      b.appendChild(span('l', parts[0]));
+      b.appendChild(span('d', '·'));
+      b.appendChild(span('r', parts[1]));
+    } else {
+      b.appendChild(span('solo', opt.textContent));
+    }
     b.addEventListener('click', () => {
       pickEl.value = opt.value;
       pickEl.dispatchEvent(new Event('change'));
