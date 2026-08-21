@@ -180,7 +180,8 @@
       -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);
       mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent)}
   #menulist::-webkit-scrollbar{display:none}
-  body.menuopen #hint{opacity:0!important}
+  /* names left-aligned, dots still sharing one axis (rows share columns) */
+  body.menuopen #hint{opacity:0!important;transition:opacity .22s ease}
   #menulist.open{opacity:1;visibility:visible;pointer-events:auto;transform:none}
   #menulist button{opacity:0;transform:translateY(5px);
       transition:opacity .3s ease,transform .35s cubic-bezier(.16,.84,.24,1),background .2s}
@@ -192,7 +193,7 @@
     #menulist,#menulist button{transition-duration:.01s}
   }
   #menulist .grp{padding:10px 16px 4px;color:#c3c7de;font-size:9px;letter-spacing:.24em;text-transform:uppercase;
-      text-align:center;text-shadow:0 1px 5px rgba(0,0,0,.9)}
+      text-align:left;text-shadow:0 1px 5px rgba(0,0,0,.9)}
   #menulist button{background:none;border:none;color:#e6e8f4;font:inherit;letter-spacing:.12em;text-transform:uppercase;
       padding:10px 14px;cursor:pointer;flex-shrink:0;white-space:nowrap;
       display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline;
@@ -207,6 +208,14 @@
       font:10px/1 "Courier New",monospace;letter-spacing:.22em;text-transform:uppercase;pointer-events:none;
       transition:opacity 1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
       text-shadow:0 1px 7px rgba(0,0,0,.95), 0 0 3px rgba(0,0,0,.95), 0 2px 14px rgba(0,0,0,.8)}
+  @supports (grid-template-columns: subgrid){
+    #menulist{display:grid;grid-template-columns:max-content max-content 1fr;align-content:start}
+    #menulist button{grid-column:1/-1;grid-template-columns:subgrid}
+    #menulist button .l{text-align:left}
+    #menulist button .d{padding:0 .55em;opacity:.8}
+    #menulist .grp{grid-column:1/-1}
+    #menulist button .solo{grid-column:1/-1;text-align:left}
+  }
 </style>
 </head>
 <body>
@@ -231,7 +240,7 @@
       <div id="menulist" role="listbox"></div>
       <button id="menubtn" type="button" aria-haspopup="listbox" aria-expanded="false"></button>
     </div>
-    <div class="growrow" style="display:none">
+    <div class="growrow">
       <span id="spark">✦</span>
       <input id="grow" type="text" size="14" placeholder="grow a flower" spellcheck="false" autocomplete="off">
     </div>
@@ -556,7 +565,7 @@ let byokKey = localStorage.getItem('lg_key') || '';
 if (location.protocol !== 'file:'){
   fetch('/status', { method: 'POST' }).then(r => r.json()).then(s => {
     serverMode = !!s.key;
-    if (serverMode) document.querySelector('.growrow').style.display = 'flex';   // local garden
+    /* local garden: serverMode means no key needed */
   }).catch(() => {});
   fetch('/grown').then(r => r.json())
     .then(list => list.forEach(s => addGrownOption(s)))
@@ -775,6 +784,13 @@ growIn.addEventListener('keydown', async e => {
   if (e.key !== 'Enter') return;
   const name = growIn.value.trim();
   if (!name || growIn.disabled) return;
+  if (!serverMode && !byokKey){          // visitors bring their own key
+    refreshForget();
+    keyPanel.classList.add('open');
+    keyIn.focus();
+    say('growing needs your own openai key');
+    return;
+  }
   growIn.disabled = true;
   growIn.classList.add('busy');
   document.getElementById('ui').classList.add('growing');
