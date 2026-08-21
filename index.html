@@ -272,7 +272,7 @@
   <button id="growlink" type="button">✦ grow your own</button>
 </div>
 <div id="keypanel">
-  <div>uses <b>your own</b> openai key — it stays in this browser, goes only to openai. ~$0.05 per flower.</div>
+  <div>uses <b>your own</b> openai key. it stays in this browser, goes only to openai. ~$0.05 per flower.</div>
   <input id="keyin" type="password" placeholder="sk-…" spellcheck="false" autocomplete="off">
   <label id="keyrow"><input id="keyremember" type="checkbox"> remember on this device</label>
   <div id="keybtns">
@@ -459,7 +459,7 @@ function loadTex(key){
     if (gen === loadGen){ uploadTex(im); if (!window.__warmed){ window.__warmed = 1; preloadRest(key); } }
   };
   im.onerror = () => {
-    if (gen === loadGen) say('that flower would not load — try another');
+    if (gen === loadGen) say('that flower would not load. try another');
   };
   im.src = IMAGES[key];
 }
@@ -482,16 +482,43 @@ const startFlower = IMAGES[qp.get('flower')] ? qp.get('flower') : 'glass-hibiscu
 document.getElementById('pick').value = startFlower;
 loadTex(startFlower);
 if (qp.get('demo')){
-  // self-driving demo for recordings: waves sweep the water, the garden turns
+  // self-driving demo for recordings:
+  // act i — waves; act ii — a flower is typed and grown; act iii — it blooms
   const W = () => innerWidth, H = () => innerHeight;
   const path = t => [ W()*(0.5 + 0.38*Math.sin(t*1.7)), H()*(0.45 + 0.3*Math.sin(t*2.3 + 1.2)) ];
+  const uiEl = document.getElementById('ui');
   let step = 0;
+  const wave = () => spawnRipple(...path(step*0.35), 0.035 + 0.02*Math.sin(step));
   const drive = () => {
-    const [x, y] = path(step*0.35);
-    spawnRipple(x, y, 0.035 + 0.02*Math.sin(step));
     step++;
-    if (step === 14){ pickEl.value = 'gold-bloom'; pickEl.dispatchEvent(new Event('change')); syncMenu(); }
-    if (step < 30) setTimeout(drive, 320);
+    if (step < 11){ wave(); setTimeout(drive, 320); return; }
+    if (step < 15){                                  // typing i·r·i·s
+      growIn.value = 'iris'.slice(0, step - 10);
+      setTimeout(drive, 340); return;
+    }
+    if (step === 15){                                // the garden grows
+      growIn.disabled = true;
+      growIn.classList.add('busy');
+      growIn.value = '';
+      growIn.placeholder = 'growing iris…';
+      uiEl.classList.add('growing');
+      document.body.classList.add('growing');
+      say('the garden is growing iris', true);
+    }
+    if (step < 29){ if (step % 2) wave(); setTimeout(drive, 340); return; }
+    if (step === 29){                                // it blooms
+      growIn.disabled = false;
+      growIn.classList.remove('busy');
+      growIn.placeholder = 'grow a flower';
+      uiEl.classList.remove('growing');
+      document.body.classList.remove('growing');
+      addGrownOption('iris', true);
+      pickEl.value = 'iris';
+      pickEl.dispatchEvent(new Event('change'));
+      syncMenu();
+      say('iris · aurora has bloomed. it now lives in the menu', true);
+    }
+    if (step < 40){ if (step % 3 === 0) wave(); setTimeout(drive, 340); return; }
   };
   setTimeout(drive, 1400);
   document.getElementById('hint').style.opacity = 0;
@@ -682,7 +709,7 @@ async function gardenGrow(name){
     if (!r.ok) throw new Error(j.error || 'generation failed');
     return j;
   }
-  throw new Error('taking longer than usual — ask for the same flower again in a minute');
+  throw new Error('taking longer than usual. ask for the same flower again in a minute');
 }
 
 // this device's own grown flowers, kept even before they are approved
@@ -780,7 +807,7 @@ async function generateWithKey(name, slug){
     }
     const j = await r.json().catch(() => ({}));
     lastErr = (j.error && j.error.message) || ('error ' + r.status);
-    if (r.status === 401) throw new Error('key rejected — check it on platform.openai.com');
+    if (r.status === 401) throw new Error('key rejected. check it on platform.openai.com');
     if (![400, 403, 404].includes(r.status)) break;
   }
   throw new Error(lastErr || 'generation failed');
@@ -928,7 +955,7 @@ document.getElementById('keysave').addEventListener('click', () => {
   keyPanel.classList.remove('open');
   document.querySelector('.growrow').style.display = 'flex';
   growIn.focus();
-  say('the key is planted — name a flower');
+  say('the key is planted. name a flower');
 });
 keyForget.addEventListener('click', () => {
   localStorage.removeItem('lg_key');
@@ -985,7 +1012,7 @@ growIn.addEventListener('keydown', async e => {
       if (!slug) throw new Error('give the flower a name');
       if (!IMAGES[slug]){
         if (!(await validateWithKey(name)))
-          throw new Error(`"${name}" is not a flower we know — try a real flower name`);
+          throw new Error(`"${name}" is not a flower we know. try a real flower name`);
         const url = await shrink(await generateWithKey(name, slug));
         IMAGES[slug] = url;
         idbPut(slug, url).catch(() => {});
@@ -994,7 +1021,7 @@ growIn.addEventListener('keydown', async e => {
     addGrownOption(slug, true);
     pickEl.value = slug;
     loadTex(slug);
-    say(labelFor(slug).toLowerCase() + ' has bloomed — it now lives in the menu');
+    say(labelFor(slug).toLowerCase() + ' has bloomed. it now lives in the menu');
   } catch(err){
     const m = String(err.message || err).toLowerCase();
     if (m.includes('not a flower') || m.includes('name a real flower')) refuse(m.slice(0, 70));
