@@ -478,6 +478,13 @@ const qp = new URLSearchParams(location.search);
 const startFlower = IMAGES[qp.get('flower')] ? qp.get('flower') : 'glass-hibiscus';
 document.getElementById('pick').value = startFlower;
 loadTex(startFlower);
+if (qp.get('grow')){
+  // deep link: arrive with a flower already growing
+  setTimeout(() => {
+    growIn.value = qp.get('grow');
+    growIn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  }, 900);
+}
 if (qp.get('color')){
   setGrade(qp.get('color'));
   gradeAmt = gradeAmtTgt; grade = [...gradeTgt];
