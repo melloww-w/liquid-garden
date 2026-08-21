@@ -579,7 +579,21 @@ if ((new URLSearchParams(location.search)).get('bare')){
   document.head.appendChild(s);
 }
 
-const MOODS = ['moonlit','pearl','mist','dusk','aurora','tide','ember','frost','velvet','halo'];
+const ATMOS = {
+  prism:   'floating in swirling iridescent water with oil-slick rainbow reflections and holographic light streaks',
+  fog:     'half-veiled in thick luminous fog drifting low over dark water, glowing softly through the mist',
+  rainbow: 'under soft rainbow light spilling across the water, delicate prismatic flares dancing on the ripples',
+  mirror:  'doubled in perfect reflection on black mirror-still water, symmetric and serene',
+  smoke:   'wrapped in ribbons of pale incense smoke curling slowly over deep dark water',
+  moonlit: 'in cold silver moonlight on deep blue night water, dusted with silver glitter',
+  gold:    'on dark green-black water blanketed with drifts of fine gold glitter, low warm candlelight',
+  aurora:  'beneath aurora light, green and violet glow shimmering through the water',
+  frost:   'rimmed with frost crystals on pale icy turquoise water, frozen glassy sparkle',
+  dusk:    'in warm amber dusk light melting into deep teal shadows',
+  pool:    'on sunlit pool water with bright caustic ripples and playful glints',
+  pearl:   'on liquid silk water with a mother-of-pearl sheen, champagne and blush iridescence, scattered crystal droplets',
+};
+const MOODS = Object.keys(ATMOS);
 function moodFor(s){ let h = 0; for (const c of s) h = (h*31 + c.charCodeAt(0)) >>> 0; return MOODS[h % MOODS.length]; }
 function labelFor(slug){
   const nm = slug.replace(/-/g, ' ');
@@ -694,11 +708,13 @@ async function idbLoad(){
 }
 idbLoad();
 
-const PROMPT = 'Ethereal dreamlike scene of {flower} flowers floating on softly glowing water, '
-  + 'petals and water scattered with tiny glowing four-pointed star sparkles and fine glitter dust, '
-  + 'hazy diffused light, gentle halation blooming around highlights, misty soft-focus edges, '
-  + 'faded vintage film grain, dreamy palette true to the flower\'s natural colors, '
-  + 'otherworldly romantic mood, soft-focus analog film photograph, vertical composition';
+function buildPrompt(name, slug){
+  return 'Ethereal dreamlike scene of ' + name + ' flowers ' + ATMOS[moodFor(slug)] + ', '
+    + 'petals and water scattered with tiny glowing four-pointed star sparkles and fine glitter dust, '
+    + 'gentle halation blooming around highlights, misty soft-focus edges, '
+    + 'faded vintage film grain, dreamy palette true to the flower\'s natural colors, '
+    + 'otherworldly romantic mood, soft-focus analog film photograph, vertical composition';
+}
 function slugify(s){
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
 }
@@ -723,13 +739,13 @@ async function validateWithKey(name){
   } catch(e){ return true; }
 }
 
-async function generateWithKey(name){
+async function generateWithKey(name, slug){
   let lastErr = null;
   for (const model of ['gpt-image-2', 'gpt-image-1']){
     const r = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + byokKey },
-      body: JSON.stringify({ model, prompt: PROMPT.replace('{flower}', name),
+      body: JSON.stringify({ model, prompt: buildPrompt(name, slug),
                              size: '1024x1536', quality: 'medium' }),
     });
     if (r.ok){
@@ -940,7 +956,7 @@ growIn.addEventListener('keydown', async e => {
       if (!IMAGES[slug]){
         if (!(await validateWithKey(name)))
           throw new Error(`"${name}" is not a flower we know — try a real flower name`);
-        const url = await shrink(await generateWithKey(name));
+        const url = await shrink(await generateWithKey(name, slug));
         IMAGES[slug] = url;
         idbPut(slug, url).catch(() => {});
       }
