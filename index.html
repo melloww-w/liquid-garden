@@ -593,6 +593,47 @@ if (location.protocol !== 'file:'){
     .then(list => list.forEach(s => addGrownOption(s)))
     .catch(() => {});
 }
+const sleep = ms => new Promise(s => setTimeout(s, ms));
+async function gardenGrow(name){
+  for (let attempt = 0; attempt < 22; attempt++){
+    let r;
+    try {
+      r = await fetch(GARDEN_API + '/api/grow', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flower: name }),
+      });
+    } catch(e){
+      // connection lost mid-growth (phone slept, timeout): the garden keeps
+      // growing server-side; ask again — our own request is never recounted
+      say('still growing ' + name.toLowerCase() + '… stay close', true);
+      await sleep(7000);
+      continue;
+    }
+    if (r.status === 202){
+      say('still growing ' + name.toLowerCase() + '…', true);
+      await sleep(8000);
+      continue;
+    }
+    const j = await r.json();
+    if (r.status === 429){
+      growLink.style.display = '';
+      throw new Error(j.error);
+    }
+    if (!r.ok) throw new Error(j.error || 'generation failed');
+    return j;
+  }
+  throw new Error('taking longer than usual — ask for the same flower again in a minute');
+}
+
+// this device's own grown flowers, kept even before they are approved
+try {
+  const mine = JSON.parse(localStorage.getItem('lg_mine') || '{}');
+  Object.entries(mine).forEach(([s, u]) => {
+    IMAGES[s] = IMAGES[s] || u;
+    addGrownOption(s);
+  });
+} catch(e){}
+
 fetch(GARDEN_API + '/api/garden').then(r => r.json()).then(list => {
   list.forEach(f => {
     IMAGES[f.slug] = IMAGES[f.slug] || f.url;
@@ -864,18 +905,14 @@ growIn.addEventListener('keydown', async e => {
       slug = j.slug;
     } else if (!byokKey){
       // the shared garden: free, one new flower a day, cached for everyone
-      const r = await fetch(GARDEN_API + '/api/grow', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ flower: name }),
-      });
-      const j = await r.json();
-      if (r.status === 429){
-        growLink.style.display = '';        // quiet path for the impatient: their own key
-        throw new Error(j.error);
-      }
-      if (!r.ok) throw new Error(j.error || 'generation failed');
+      const j = await gardenGrow(name);
       slug = j.slug;
       IMAGES[slug] = j.url;
+      try {
+        const mine = JSON.parse(localStorage.getItem('lg_mine') || '{}');
+        mine[slug] = j.url;
+        localStorage.setItem('lg_mine', JSON.stringify(mine));
+      } catch(e){}
     } else {
       slug = slugify(name);
       if (!slug) throw new Error('give the flower a name');
