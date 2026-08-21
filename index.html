@@ -112,7 +112,7 @@
   #ui.growing .growrow{box-shadow:0 8px 36px -10px rgba(220,212,255,.85)}
   #ui.ui-b #menubtn:hover,#ui.ui-b #grow:focus{border-bottom-color:rgba(240,244,255,.85)}
   #ui.ui-b #menu{position:static}          /* list anchors to the full bar */
-  #ui.ui-b #menulist{background:rgba(20,21,34,.88)}
+  #ui.ui-b #menulist{background:rgba(18,19,32,.34)}
 
   /* ---- skin C · plaque: a museum wall label ---- */
   #ui.ui-c .bar{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
@@ -173,13 +173,14 @@
       display:flex;flex-direction:column;opacity:0;visibility:hidden;pointer-events:none;
       transform:translateY(10px) scale(.985);transform-origin:50% 100%;
       transition:opacity .3s ease,transform .38s cubic-bezier(.16,.84,.24,1),visibility .38s;
-      background:rgba(58,60,84,.72);border:1px solid rgba(200,205,230,.32);border-radius:2px;
-      backdrop-filter:blur(12px);max-height:min(52vh,420px);overflow:auto;z-index:6;
+      background:rgba(30,32,48,.34);border:1px solid rgba(200,205,230,.22);border-radius:2px;
+      backdrop-filter:blur(20px) saturate(1.1);-webkit-backdrop-filter:blur(20px) saturate(1.1);max-height:min(52vh,420px);overflow:auto;z-index:6;
       scrollbar-width:none;
       padding-bottom:20px;
       -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);
       mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent)}
   #menulist::-webkit-scrollbar{display:none}
+  body.menuopen #hint{opacity:0!important}
   #menulist.open{opacity:1;visibility:visible;pointer-events:auto;transform:none}
   #menulist button{opacity:0;transform:translateY(5px);
       transition:opacity .3s ease,transform .35s cubic-bezier(.16,.84,.24,1),background .2s}
@@ -190,16 +191,18 @@
   @media (prefers-reduced-motion:reduce){
     #menulist,#menulist button{transition-duration:.01s}
   }
-  #menulist .grp{padding:10px 16px 4px;color:#b6bad4;font-size:9px;letter-spacing:.24em;text-transform:uppercase;text-align:left}
+  #menulist .grp{padding:10px 16px 4px;color:#c3c7de;font-size:9px;letter-spacing:.24em;text-transform:uppercase;
+      text-align:center;text-shadow:0 1px 5px rgba(0,0,0,.9)}
   #menulist button{background:none;border:none;color:#e6e8f4;font:inherit;letter-spacing:.12em;text-transform:uppercase;
       padding:10px 14px;cursor:pointer;flex-shrink:0;white-space:nowrap;
-      display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline}
+      display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline;
+      text-shadow:0 1px 5px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.7)}
   #menulist button .l{text-align:right;overflow:hidden;text-overflow:ellipsis}
-  #menulist button .d{padding:0 .6em;opacity:.65}
+  #menulist button .d{padding:0 .6em;opacity:.6}
   #menulist button .r{text-align:left;overflow:hidden;text-overflow:ellipsis}
   #menulist button .solo{grid-column:1/-1;text-align:center}
-  #menulist button:hover,#menulist button:focus-visible{background:rgba(210,218,245,.16);outline:none}
-  #menulist button[aria-selected="true"]{color:#fff;background:rgba(210,218,245,.08)}
+  #menulist button:hover,#menulist button:focus-visible{background:rgba(220,228,255,.14);outline:none}
+  #menulist button[aria-selected="true"]{color:#fff;background:rgba(220,228,255,.10)}
   #hint{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);color:#eef0fa;
       font:10px/1 "Courier New",monospace;letter-spacing:.22em;text-transform:uppercase;pointer-events:none;
       transition:opacity 1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -646,7 +649,11 @@ function refreshForget(){ keyForget.style.display = localStorage.getItem('lg_key
 // custom dropdown mirroring the hidden select
 const menuBtn = document.getElementById('menubtn');
 const menuList = document.getElementById('menulist');
-function closeMenu(){ menuList.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
+function closeMenu(){
+  menuList.classList.remove('open');
+  menuBtn.setAttribute('aria-expanded', 'false');
+  document.body.classList.remove('menuopen');
+}
 function currentLabel(){
   const o = [...pickEl.options].find(o => o.value === pickEl.value);
   return o ? o.textContent : '';
@@ -699,7 +706,11 @@ menuBtn.addEventListener('click', e => {
   e.stopPropagation();
   const open = menuList.classList.contains('open');
   if (open) closeMenu();
-  else { menuList.classList.add('open'); menuBtn.setAttribute('aria-expanded', 'true'); }
+  else {
+    menuList.classList.add('open');
+    menuBtn.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('menuopen');
+  }
 });
 document.addEventListener('click', e => { if (!menuList.contains(e.target) && e.target !== menuBtn) closeMenu(); });
 addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
