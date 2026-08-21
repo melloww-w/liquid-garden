@@ -4,6 +4,10 @@
 
 **Play:** https://melloww-w.github.io/liquid-garden/
 
+<p align="center">
+  <img src="demo.gif" width="330" alt="waves moving through a garden of glittering flowers">
+</p>
+
 ## How to play
 
 **Make waves.** Move your cursor across the water; on a phone, drag or tap.

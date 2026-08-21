@@ -481,6 +481,21 @@ const qp = new URLSearchParams(location.search);
 const startFlower = IMAGES[qp.get('flower')] ? qp.get('flower') : 'glass-hibiscus';
 document.getElementById('pick').value = startFlower;
 loadTex(startFlower);
+if (qp.get('demo')){
+  // self-driving demo for recordings: waves sweep the water, the garden turns
+  const W = () => innerWidth, H = () => innerHeight;
+  const path = t => [ W()*(0.5 + 0.38*Math.sin(t*1.7)), H()*(0.45 + 0.3*Math.sin(t*2.3 + 1.2)) ];
+  let step = 0;
+  const drive = () => {
+    const [x, y] = path(step*0.35);
+    spawnRipple(x, y, 0.035 + 0.02*Math.sin(step));
+    step++;
+    if (step === 14){ pickEl.value = 'gold-bloom'; pickEl.dispatchEvent(new Event('change')); syncMenu(); }
+    if (step < 30) setTimeout(drive, 320);
+  };
+  setTimeout(drive, 1400);
+  document.getElementById('hint').style.opacity = 0;
+}
 if (qp.get('grow')){
   // deep link: arrive with a flower already growing
   setTimeout(() => {
