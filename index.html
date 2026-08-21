@@ -112,7 +112,7 @@
   #ui.growing .growrow{box-shadow:0 8px 36px -10px rgba(220,212,255,.85)}
   #ui.ui-b #menubtn:hover,#ui.ui-b #grow:focus{border-bottom-color:rgba(240,244,255,.85)}
   #ui.ui-b #menu{position:static}          /* list anchors to the full bar */
-  #ui.ui-b #menulist{left:0;right:0;width:auto;background:rgba(20,21,34,.88)}
+  #ui.ui-b #menulist{background:rgba(20,21,34,.88)}
 
   /* ---- skin C · plaque: a museum wall label ---- */
   #ui.ui-c .bar{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
@@ -156,7 +156,7 @@
   }
   #ui.bleed{width:100%;max-width:100%;padding-left:0;padding-right:0}
   #ui.bleed #menubtn,#ui.bleed #grow{padding-left:18px;padding-right:18px}
-  #ui.bleed #menulist{left:0;right:0;width:auto;border-left:none;border-right:none;border-radius:0}
+  #ui.bleed #menulist{left:26px;right:26px;width:auto}
   #ui.bleed .growrow{padding-left:14px;padding-right:14px;margin-left:26px;margin-right:26px}
   #grow.busy{animation:growpulse 1.3s ease-in-out infinite}
   #grow.busy::placeholder{color:#d6daf0}
@@ -169,7 +169,10 @@
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%238f91a8'/%3E%3C/svg%3E");
       background-repeat:no-repeat;background-position:right 12px center}
   #menubtn:hover,#menubtn:focus-visible{border-color:rgba(220,225,255,.65);outline:none}
-  #menulist{position:absolute;bottom:calc(100% + 8px);left:0;width:100%;display:none;flex-direction:column;
+  #menulist{position:absolute;bottom:calc(100% + 10px);left:14px;right:14px;width:auto;
+      display:flex;flex-direction:column;opacity:0;visibility:hidden;pointer-events:none;
+      transform:translateY(10px) scale(.985);transform-origin:50% 100%;
+      transition:opacity .3s ease,transform .38s cubic-bezier(.16,.84,.24,1),visibility .38s;
       background:rgba(58,60,84,.72);border:1px solid rgba(200,205,230,.32);border-radius:2px;
       backdrop-filter:blur(12px);max-height:min(52vh,420px);overflow:auto;z-index:6;
       scrollbar-width:none;
@@ -177,7 +180,16 @@
       -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent);
       mask-image:linear-gradient(to bottom,#000 calc(100% - 14px),transparent)}
   #menulist::-webkit-scrollbar{display:none}
-  #menulist.open{display:flex}
+  #menulist.open{opacity:1;visibility:visible;pointer-events:auto;transform:none}
+  #menulist button{opacity:0;transform:translateY(5px);
+      transition:opacity .3s ease,transform .35s cubic-bezier(.16,.84,.24,1),background .2s}
+  #menulist.open button{opacity:1;transform:none}
+  #menulist.open button:nth-child(-n+3){transition-delay:.02s}
+  #menulist.open button:nth-child(n+4):nth-child(-n+7){transition-delay:.05s}
+  #menulist.open button:nth-child(n+8){transition-delay:.08s}
+  @media (prefers-reduced-motion:reduce){
+    #menulist,#menulist button{transition-duration:.01s}
+  }
   #menulist .grp{padding:10px 16px 4px;color:#b6bad4;font-size:9px;letter-spacing:.24em;text-transform:uppercase;text-align:left}
   #menulist button{background:none;border:none;color:#e6e8f4;font:inherit;letter-spacing:.12em;text-transform:uppercase;
       padding:10px 16px;cursor:pointer;text-align:left;flex-shrink:0;white-space:nowrap;
