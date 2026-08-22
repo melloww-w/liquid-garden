@@ -212,7 +212,7 @@
   /* the caption is itself made of shimmering pearl — no box, no border */
   #hint{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);
       font:10px/1 "Courier New",monospace;letter-spacing:.22em;text-transform:uppercase;pointer-events:none;
-      transition:opacity 1s;white-space:nowrap;padding:12px 26px;
+      transition:opacity 1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:12px 26px;
       color:transparent;
       background-image:linear-gradient(100deg,
         #b9bdd8 0%, #f4f0ff 30%, #fff6e4 50%, #f4f0ff 70%, #b9bdd8 100%);
@@ -255,6 +255,7 @@
     <option value="emerald-orchid">Orchid · emerald</option>
     <option value="blossom-drift">Cherry blossom · drift</option>
     <option value="queen-of-night">Queen of the Night · moon</option>
+    <option value="iris">Iris · aurora</option>
     <option value="jasmine">Jasmine · moonlight</option>
     <option value="dandelion">Dandelion · gold drift</option>
   </select>
@@ -282,7 +283,7 @@
   </div>
 </div>
 <script>
-const IMAGES = {"glass-hibiscus": "tex/glass-hibiscus.jpg","prism-peony": "tex/prism-peony.jpg","pearl-rose": "tex/pearl-rose.jpg","holo-rose": "tex/holo-rose.jpg","gold-bloom": "tex/gold-bloom.jpg","jade-lotus": "tex/jade-lotus.jpg","scarlet-poppy": "tex/scarlet-poppy.jpg","emerald-orchid": "tex/emerald-orchid.jpg","blossom-drift": "tex/blossom-drift.jpg","queen-of-night": "tex/queen-of-night.jpg","jasmine": "tex/jasmine.jpg","dandelion": "tex/dandelion.jpg"};
+const IMAGES = {"glass-hibiscus": "tex/glass-hibiscus.jpg","prism-peony": "tex/prism-peony.jpg","pearl-rose": "tex/pearl-rose.jpg","holo-rose": "tex/holo-rose.jpg","gold-bloom": "tex/gold-bloom.jpg","jade-lotus": "tex/jade-lotus.jpg","scarlet-poppy": "tex/scarlet-poppy.jpg","emerald-orchid": "tex/emerald-orchid.jpg","blossom-drift": "tex/blossom-drift.jpg","queen-of-night": "tex/queen-of-night.jpg", "iris": "tex/iris.jpg","jasmine": "tex/jasmine.jpg","dandelion": "tex/dandelion.jpg"};
 const VS = `attribute vec2 aP; varying vec2 vUv;
 void main(){ vUv = aP*.5+.5; gl_Position = vec4(aP,0.,1.); }`;
 const FS = `
@@ -516,7 +517,7 @@ if (qp.get('demo')){
       pickEl.value = 'iris';
       pickEl.dispatchEvent(new Event('change'));
       syncMenu();
-      say('iris · aurora has bloomed. it now lives in the menu', true);
+      say('iris · aurora has bloomed', true);
     }
     if (step < 40){ if (step % 3 === 0) wave(); setTimeout(drive, 340); return; }
   };
@@ -1021,7 +1022,7 @@ growIn.addEventListener('keydown', async e => {
     addGrownOption(slug, true);
     pickEl.value = slug;
     loadTex(slug);
-    say(labelFor(slug).toLowerCase() + ' has bloomed. it now lives in the menu');
+    say(labelFor(slug).toLowerCase() + ' has bloomed');
   } catch(err){
     const m = String(err.message || err).toLowerCase();
     if (m.includes('not a flower') || m.includes('name a real flower')) refuse(m.slice(0, 70));
