@@ -212,7 +212,7 @@
   /* the caption is itself made of shimmering pearl — no box, no border */
   #hint{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);
       font:10px/1 "Courier New",monospace;letter-spacing:.22em;text-transform:uppercase;pointer-events:none;
-      transition:opacity 1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:12px 26px;
+      transition:opacity 1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;padding:12px 26px;
       color:transparent;
       background-image:linear-gradient(100deg,
         #b9bdd8 0%, #f4f0ff 30%, #fff6e4 50%, #f4f0ff 70%, #b9bdd8 100%);
@@ -483,8 +483,7 @@ const startFlower = IMAGES[qp.get('flower')] ? qp.get('flower') : 'glass-hibiscu
 document.getElementById('pick').value = startFlower;
 loadTex(startFlower);
 if (qp.get('demo')){
-  // self-driving demo for recordings:
-  // act i — waves; act ii — a flower is typed and grown; act iii — it blooms
+  // self-driving demo: waves, the menu, a flower typed and grown, the bloom
   const W = () => innerWidth, H = () => innerHeight;
   const path = t => [ W()*(0.5 + 0.38*Math.sin(t*1.7)), H()*(0.45 + 0.3*Math.sin(t*2.3 + 1.2)) ];
   const uiEl = document.getElementById('ui');
@@ -492,12 +491,16 @@ if (qp.get('demo')){
   const wave = () => spawnRipple(...path(step*0.35), 0.035 + 0.02*Math.sin(step));
   const drive = () => {
     step++;
-    if (step < 11){ wave(); setTimeout(drive, 320); return; }
-    if (step < 15){                                  // typing i·r·i·s
-      growIn.value = 'iris'.slice(0, step - 10);
-      setTimeout(drive, 340); return;
+    if (step < 9){ wave(); }                          // act i - waves
+    if (step === 9)  menuBtn.click();                 // act ii - the menu opens
+    if (step === 13){                                 // a flower is chosen
+      const row = menuList.querySelector('button[data-value="gold-bloom"]');
+      if (row) row.click();
     }
-    if (step === 15){                                // the garden grows
+    if (step > 13 && step < 17) wave();
+    if (step >= 17 && step < 21)                      // act iii - typing i r i s
+      growIn.value = 'iris'.slice(0, step - 16);
+    if (step === 21){                                 // the garden grows
       growIn.disabled = true;
       growIn.classList.add('busy');
       growIn.value = '';
@@ -506,20 +509,20 @@ if (qp.get('demo')){
       document.body.classList.add('growing');
       say('the garden is growing iris', true);
     }
-    if (step < 29){ if (step % 2) wave(); setTimeout(drive, 340); return; }
-    if (step === 29){                                // it blooms
+    if (step > 21 && step < 34 && step % 2) wave();
+    if (step === 34){                                 // act iv - the bloom
       growIn.disabled = false;
       growIn.classList.remove('busy');
       growIn.placeholder = 'grow a flower';
       uiEl.classList.remove('growing');
       document.body.classList.remove('growing');
-      addGrownOption('iris', true);
       pickEl.value = 'iris';
       pickEl.dispatchEvent(new Event('change'));
       syncMenu();
       say('iris · aurora has bloomed', true);
     }
-    if (step < 40){ if (step % 3 === 0) wave(); setTimeout(drive, 340); return; }
+    if (step > 34 && step % 3 === 0) wave();
+    if (step < 45) setTimeout(drive, 340);
   };
   setTimeout(drive, 1400);
   document.getElementById('hint').style.opacity = 0;
